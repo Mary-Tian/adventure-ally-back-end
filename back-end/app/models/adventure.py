@@ -3,7 +3,7 @@
 
 from app import db
 
-class Activity(db.Model): #inheriting from SQLA's model class, turning a basic python class into a SQLA model, Model syntax stays
+class Adventure(db.Model): #inheriting from SQLA's model class, turning a basic python class into a SQLA model, Model syntax stays
     id = db.Column(db.Integer, primary_key=True, autoincrement=True) #model creates blueprint for table in our databse
     activity_name = db.Column(db.String) #without db.Column, we would not be able to have these columns in our task table
     likes_count = db.Column(db.Integer, default = 0)

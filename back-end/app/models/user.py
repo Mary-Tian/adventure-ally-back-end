@@ -5,4 +5,4 @@ class User(db.Model):
     user_name = db.Column(db.Text)
     
     # title = db.Column(db.String)
-    activity = db.relationship("Activity", backref="user", lazy = True, )
+    adventure = db.relationship("Adventure", backref="user", lazy = True, )

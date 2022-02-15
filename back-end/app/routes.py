@@ -1,109 +1,92 @@
 from flask import Blueprint, request, jsonify
 from app import db
-from app.models import board
 from app.models.user import User
 from app.models.activity import Activity
 from app.models.location import Location
 
 
-cards_bp = Blueprint("cards", __name__, url_prefix="/cards")
-boards_bp = Blueprint("boards", __name__, url_prefix="/boards")
-
+activity_bp = Blueprint("activity", __name__, url_prefix="/activity")
+favorite_bp = Blueprint("favorite", __name__, url_prefix="/favorite")
+location_bp = Blueprint("location", __name__, url_prefix="/location")
+user_bp = Blueprint("user", __name__, url_prefix="/user")
 
 # CREATE
-# Create a new board
-@boards_bp.route("", methods=['POST'])
-def create_board():
+# Create a new user
+@user_bp.route("", methods=['POST'])
+def user_board():
     request_body = request.get_json()
-    if "owner" not in request_body or "title" not in request_body:
+    if "user" not in request_body or "user_name" not in request_body:
         return jsonify("Not Found"), 404
 
-    new_board = Board(owner=request_body["owner"], title=request_body["title"])
+    new_user = User(owner=request_body["user"], title=request_body["user_name"])
 
-    db.session.add(new_board)
+    db.session.add(new_user)
     db.session.commit()
 
-    return jsonify(f"{new_board.title} successfully created."), 201
+    return jsonify(f"{new_user.user_name} successfully created."), 201
 
 
-# Create a new card
-@cards_bp.route("/<board_id>/cards", methods=['POST'])
-#front-end needs a click event to provide API call to backend with board id
-def create_card(board_id):
-    board = Board.query.get(board_id)
-    if board is None:
+# Create a new favorite
+@favorite_bp.route("/<user_id>/favorite", methods=['POST'])
+def create_favorite(user_id):
+    user = User.query.get(user_id)
+    if user is None:
         return jsonify("Not Found"), 404
 
     request_body = request.get_json()
 
-    if "message" not in request_body:
-        return jsonify("Not Found"), 404
-
-    new_card = Card(board_id = board.id, message=request_body["message"], likes_count=0)
+    new_favorite = Favorite(user_id = user.id, likes_count=0)
 
     db.session.add(new_card)
     db.session.commit()
 
-    return jsonify(f"Card number {new_card.card_id} successfully created."), 201
+    return jsonify(f"{new_favorite.favorite_name} successfully created."), 201
 
 
 
 # READ
-# All cards within a board
-@boards_bp.route("/<board_id>/cards", methods=['GET'])
-def retrieve_cards(board_id):
-    board = Board.query.get(board_id)
-    if board is None:
+# All favorites for a specific user
+@favorite_bp.route("/<user_id>/favorite", methods=['GET'])
+def retrieve_favorites(user_id):
+    user = User.query.get(user_id)
+    if user is None:
         return jsonify("Not Found"), 404
         
-    cards_response = [card.card_dict() for card in board.cards]
+    favorites_response = [favorite.favorite_dict() for favorite in user.favorite]
 
-    return jsonify(cards_response), 200
+    return jsonify(favorites_response), 200
 
 
-@boards_bp.route("", methods=["GET"])
-def retrieve_boards():
-    boards = Board.query.all()
-    boards_response = [board.board_dict() for board in boards]
+@user_bp.route("", methods=["GET"])
+def retrieve_users():
+    users = User.query.all()
+    users_response = [user.user_dict() for user in users]
     
-    return jsonify(boards_response), 200
+    return jsonify(users_response), 200
 
 
 # UPDATE
-# Can update cards by adding 'likes'
-@cards_bp.route("/<card_id>", methods=["PATCH"])
-def update_card(card_id):
-    card = Card.query.get(card_id)
-    if card is None:
+# Can update favorites by adding 'likes'
+@favorite_bp.route("/<user_id>", methods=["PATCH"])
+def update_favorite(user_id):
+    favorite = Favorite.query.get(favorite_id)
+    if favorite is None:
         return jsonify("Not Found"), 404
 
-    card.likes_count += 1
+    favorite.likes_count += 1
 
     db.session.commit()
 
-    return jsonify(f"Card {card.card_id} successfully updated. Current likes count = {card.likes_count}"), 200
+    return jsonify(f"{favorite.favorite_name} successfully updated. Current likes count = {favorite.likes_count}"), 200
 
 
-# DELETE
-# Can delete a single board
-@boards_bp.route("/<board_id>", methods=["DELETE"])
-def delete_board(board_id):
-    board = Board.query.get(board_id) 
 
-    for card in board.cards:
-        db.session.delete(card)
-    db.session.delete(board)
+# Delete a favorite
+@favorite_bp.route("/<user_id>", methods=["DELETE"])
+def delete_favorite(favorite_id):
+    favorite = Favorite.query.get(favorite_id) 
+
+    db.session.delete(favorite)
     db.session.commit()
 
-    return jsonify(f"Board {board.id} successfully deleted.")
-
-
-# Can delete cards in a board
-@cards_bp.route("/<card_id>", methods=["DELETE"])
-def delete_card(card_id):
-    card = Card.query.get(card_id) 
-
-    db.session.delete(card)
-    db.session.commit()
-
-    return jsonify(f"Card {card.card_id} successfully deleted.")
+    return jsonify(f"{favorite.favorite_name} successfully deleted.")
